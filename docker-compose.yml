@@ -1,0 +1,76 @@
+version: '3.8'
+services:
+  php:
+    container_name: catalog_php
+    build:
+      context: dockerfiles
+      dockerfile: php.Dockerfile
+    volumes:
+      - ./src:/var/www/laravel
+    networks:
+      - catalog
+      - backend
+
+  rabbitmq:   
+    container_name: catalog_rabbitmq
+    image: rabbitmq:3.10-management-alpine
+    hostname: rabbit
+    environment:
+      - RABBITMQ_DEFAULT_USER=rmuser
+      - RABBITMQ_DEFAULT_PASS=rmpassword
+      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit disk_free_limit 2147483648
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    volumes:
+      - ./data/rabbitmq:/var/lib/rabbitmq
+    networks:
+      - backend
+
+  supervisor:
+    build:
+      context: dockerfiles
+      dockerfile: supervisor.Dockerfile
+    container_name: catalog_supervisor
+    volumes:
+      - ./src:/var/www/laravel
+      - ./configs/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf:ro
+      - ./configs/supervisord.conf:/etc/supervisord.conf:ro
+      - ./src/storage/logs:/etc/supervisor/logs
+    command: "supervisord -n -c /etc/supervisord.conf"
+    ports:
+      - 6003:6001
+    networks:
+      - backend
+      # - catalog
+
+  #вспомогательные контейнеры
+  composer:
+    container_name: catalog_composer
+    build:
+      context: dockerfiles
+      dockerfile: composer.Dockerfile
+    volumes:
+      - ./src:/var/www/laravel
+    networks:
+      - catalog
+
+  artisan:
+    container_name: catalog_artisan
+    build:
+      context: dockerfiles
+      dockerfile: php.Dockerfile
+    volumes:
+      - ./src:/var/www/laravel
+    entrypoint: [ "php", "/var/www/laravel/artisan" ]
+    networks:
+      - catalog
+
+networks:
+  backend:
+    driver: bridge
+    external: true
+  catalog:
+    driver: bridge
+  catalog_php:
+    driver: bridge
