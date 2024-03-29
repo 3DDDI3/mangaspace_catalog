@@ -33,8 +33,10 @@ class CatalogConsumer extends Command
         $connection = new AMQPStreamConnection(config('rabbitmq.host'), config('rabbitmq.port'), config('rabbitmq.user'), config('rabbitmq.password'));
         $channel = $connection->channel();
 
+
+        echo " [*] Waiting for messages. To exit press CTRL+C\n";
         $channel->basic_consume('request', 'catalog', no_ack: true, callback: function (AMQPMessage $msg) use ($channel) {
-            echo $msg->body . PHP_EOL;
+            echo ' [x] Received ', $msg->body, "\n";
             $message = new AMQPMessage('hello back');
             $message->set(
                 'application_headers',

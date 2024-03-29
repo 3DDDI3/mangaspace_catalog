@@ -8,8 +8,8 @@ services:
     volumes:
       - ./src:/var/www/laravel
     networks:
-      - catalog
       - backend
+      - catalog
 
   mysql:
     container_name: auth_mysql
@@ -23,7 +23,7 @@ services:
     volumes:
       - ./data/mysql:/var/lib/mysql
     networks:
-      - authorization
+      - catalog
 
   phpmyadmin:
     container_name: auth_pma
@@ -35,24 +35,7 @@ services:
       MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
       PMA_PORT: 3306
     networks:
-      - authorization
-
-
-  rabbitmq:   
-    container_name: catalog_rabbitmq
-    image: rabbitmq:3.10-management-alpine
-    hostname: rabbit
-    environment:
-      - RABBITMQ_DEFAULT_USER=rmuser
-      - RABBITMQ_DEFAULT_PASS=rmpassword
-      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit disk_free_limit 2147483648
-    ports:
-      - "5673:5672"
-      - "15673:15672"
-    volumes:
-      - ./data/rabbitmq:/var/lib/rabbitmq
-    networks:
-      - backend
+      - catalog
 
   supervisor:
     build:
@@ -65,8 +48,8 @@ services:
       - ./configs/supervisord.conf:/etc/supervisord.conf:ro
       - ./src/storage/logs:/etc/supervisor/logs
     command: "supervisord -n -c /etc/supervisord.conf"
-    ports:
-      - 6003:6001
+    # ports:
+    #   - 6003:6001
     networks:
       - backend
       # - catalog
@@ -98,6 +81,4 @@ networks:
     driver: bridge
     external: true
   catalog:
-    driver: bridge
-  catalog_php:
     driver: bridge
